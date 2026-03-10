@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+
+    <title>SignUp</title>
+
+    <style>
+        body {
+            text-align: center;
+            background-image: url('/bowie.jpg');
+            background-repeat: no-repeat;
+            background-size: 110%;
+            width: auto;
+            background-position: center;
+            background-color: #000;
+        }
+        h1{
+          color: #ffff00;
+          -webkit-text-stroke: 1px #000;
+        }
+        input[type=text], input[type=password] {
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        label{
+          margin-right: 290px;
+          margin-top: 100px;
+          margin-bottom: 20px;
+        }
+
+        .form-box {
+          border: 2px solid #ffff00;
+          box-sizing: border-box;
+          background-color: #fff;
+          width: 300px;
+          height: 320px;
+          padding: 20px;
+          margin: auto;
+        }
+
+        .container {
+            vertical-align: middle;
+            padding: 16px;
+            padding-bottom: 2px;
+            margin: auto;
+        }
+
+        .button_container {
+          vertical-align: middle;
+          padding-left: 60px;
+          margin: 20px;
+        }
+
+        button {
+          margin-top: 20px;
+        }
+
+    </style>
+
+</head>
+
+<body>
+    
+  <h1>Signup</h1>
+
+  <div class="form-box">
+  <form>
+    <div class="container">
+      <label for="uname"><b>Username</b></label>
+      <div class="input-field">
+       <input type="text" placeholder="Enter Username" name="username" id="username" required>
+      </div>
+  
+      <label for="psw"><b>Password</b></label>
+      <div class="input-field">
+        <input type="password" placeholder="Enter Password" name="password" id="password" required>
+      </div>
+    </div>
+    
+  
+
+    <button id="signupBtn">Signup</button>
+  
+  </form>
+  </div>
+
+  <p id='msg'><i>Signup</i></p>
+  <script src="/signupScript.js"></script>
+</body>
+
+
+</html>

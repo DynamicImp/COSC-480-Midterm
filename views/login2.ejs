@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="eng">
+
+<head>
+  <title>Login</title>
+
+    <style>
+        body {
+            text-align: center;
+            background-image: url('/bowie.jpg');
+            background-repeat: no-repeat;
+            background-size: 110%;
+            width: auto;
+            background-position: center;
+            background-color: #000;
+        }
+        input[type=text], input[type=password] {
+            padding: 12px 20px;
+            margin: 8px 0;
+            border: 1px solid #6d6d6d;
+            box-sizing: border-box;
+        }
+        h1{
+          color: #ffff00;
+          -webkit-text-stroke: 1px #000;
+        }
+
+        label{
+          margin-right: 290px;
+          margin-top: 100px;
+          margin-bottom: 20px;
+        }
+
+        .form-box {
+          border: 2px solid #ffff00;
+          box-sizing: border-box;
+          background-color: #fff;
+          width: 300px;
+          height: 320px;
+          padding: 20px;
+          margin: auto;
+        }
+        .container {
+            vertical-align: middle;
+            padding: 16px;
+            padding-bottom: 2px;
+        }
+
+        .button_container {
+          vertical-align: middle;
+          padding-left: 60px;
+          padding-top: 40px;
+          margin: 20px;
+        }
+
+        button {
+          margin-top: 20px;
+
+        }
+
+    </style>
+
+</head>
+
+<body>
+    
+  <h1>Login</h1>
+
+  <div class="form-box">
+  <form>
+    <div class="container">
+      <label for="uname"><b>Username</b></label>
+      <div class="input-field">
+       <input type="text" placeholder="Enter Username" name="username" id="username" required>
+      </div>
+  
+      <label for="psw"><b>Password</b></label>
+      <div class="input-field">
+        <input type="password" placeholder="Enter Password" name="password" id="password" required>
+      </div>
+    </div>
+  
+    <button type="submit" id="loginBtn">Login</button>
+  
+  </form>
+  </div>
+
+  <p id='msg'><i>Login</i></p>
+  <script src="/loginScript.js"></script>
+
+</body>
+
+
+</html>
