@@ -1,234 +1,137 @@
 require('dotenv').config();
-const http = require('http')
-const fs = require('fs')
+const http = require('http');
+const fs = require('fs');
 const bcrypt = require('bcrypt');
-
-const port = 3000
 const express = require('express');
 const cookieParser = require('cookie-parser');
 const sessions = require('express-session');
 const Database = require('./login.contr');
+const path = require('path');
 
 const app = express();
-
-const path = require('path');
-app.use(express.static(path.join(__dirname, 'public')));
-app.use(express.json());
-
-
-// creating 24 hrs from milliseconds
+const database = new Database();
+const port2 = 8080;
 const oneDay = 1000 * 60 * 60 * 24;
 
-// sessions middleware
+app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(cookieParser());
+app.set('view engine', 'ejs');
+
 app.use(sessions({
     secret: 'thisismysecretkey123',
     saveUninitialized: true,
-    cookie: {maxAge: oneDay},
+    cookie: { maxAge: oneDay },
     resave: false
 }));
 
-// parse the incoming data
-app.use(express.urlencoded({ extended: true}));
-
-// serving public file
-//app.use(express.static(__dirname + '/public'));
-
-//app.set('views', __dirname + '/public');
-//app.engine('html', require('ejs').renderFile);
-app.set('view engine', 'ejs');
-
-// cookie parser middleware
-app.use(cookieParser());
-
-
-// middleware to stop browser caching
 app.use((req, res, next) => {
     res.set('Cache-Control', 'no-store');
     next();
-})
+});
 
-
-
-
-///////////////////////////////////////////////////////
-///////////////// ROUTES //////////////////////////////
-///////////////////////////////////////////////////////
-
-
-
-const database = new Database();
-const port2 = 8080;
-var session = null;
-
-
-// home
 app.get('/', (req, res) => {
-
-    // check if a session exists
-    session = req.session;
-    console.log(session.userid);
-    if (session.userid) {
-        
-       // res.send(`<h1>Welcome, ${session.userid}!<h1>\n
+    if (req.session.userid) {
         res.redirect('/bank');
-
-    }
-    else {
-        // homepage
-        //res.sendFile('public/index.html', {root:__dirname});
+    } else {
         res.render('index');
     }
 });
 
-
-// send login page
 app.get('/login', (req, res) => {
     res.render('login2');
 });
 
-// send signup page
 app.get('/signup', (req, res) => {
     res.render('signup2');
-})
+});
 
-
-// receive user credentials from front to back.
-// authenticates users
 app.post('/loginUser', async (req, res) => {
-
     const username = req.body.username;
     const password = req.body.password;
-
-    //// debug
-    console.log(`username: ${username} and ${password}`);
-
-    // find username
     const user = await database.findUser(username);
 
-    // if user's creds was not detected
     if (!user.detected) {
-        console.log('Did not find user');
         res.status(404).send('User not found');
         return;
-    }
-    // if username exists
-    else {
-        console.log('User found');
-
-        // get password of the user
+    } else {
         const creds = await database.select(username);
         const hashedPassword = creds.password;
 
-        // compare/check encrypted password
         if (await bcrypt.compare(password, hashedPassword)) {
-            
-            // get account info
             const account = await database.getAccount(creds.userid);
-            const accountSavings = account.savings;
-
-            // save session
-            session = req.session;
-            session.userid = creds.userid;
-            session.username = creds.username;
-            session.savings = accountSavings;
-            console.log(req.session);
-
-           res.status(300).send();
-           // no redirect
-           // res.redirect('/bank');
-        }
-        else {
-            console.log('Invalid password');
+            req.session.userid = creds.userid;
+            req.session.username = creds.username;
+            req.session.savings = account.savings;
+            res.status(300).send();
+        } else {
             res.status(403).send('Invalid password');
             return;
         }
     }
 });
 
-
-// post stuff from front to end
-// add user to db
 app.post('/signupUser', async (req, res) => {
-
     const parcel = req.body;
-    console.log(`User: ${parcel.username}\nPass: ${parcel.password}`);
-
-    // check db if username already exists
     const cred = await database.findUser(parcel.username);
 
-    // if user is already in the db
     if (cred.detected) {
-        console.log('User already in the db');
-        // send error status
         res.status(404).send('User already exists');
-    }
-    else {
-        console.log('User not in db');
-
-        // encrypt password before storing to db
+    } else {
         bcrypt.hash(parcel.password, 10)
             .then((hash) => {
                 database.insert(parcel.username, hash);
             }).catch((error) => {
-                console.log('Could not store credentials', error);
                 res.status(404).send();
                 return;
             });
-
-        // send OK status
         res.status(300).send();
     }
 });
 
-// logout
-// update new account value before exiting
 app.get('/logout', async (req, res) => {
+    if (req.session && req.session.userid) {
+        try {
+            await database.updateAccount(req.session.userid, req.session.savings);
+        } catch (err) {
+            console.log(err);
+        }
+    }
+    req.session.destroy(() => {
+        res.redirect('/');
+    });
+});
 
-    console.log('Current amount before logout: ' + session.savings)
-
-    // update account first before destroying session
-    const result = await database.updateAccount(session.userid, session.savings)
-    req.session.destroy();
-    res.redirect('/');
-})
-
-// send bank page
 app.get('/bank', (req, res) => {
-
-    if (!session.userid) {
+    if (!req.session.userid) {
         res.redirect('/login');
         return;
     }
-    
+    res.render('bank', { session: req.session });
+});
 
-    res.render('bank', {session: session});
-})
-
-// get current session
 app.get('/getSession', (req, res) => {
-    const userCred = {
-        username: session.username, 
-        userid: session.userid,
-        savings: session.savings
-    }
-    res.json(userCred);
-})
+    res.json({
+        username: req.session.username,
+        userid: req.session.userid,
+        savings: parseFloat(req.session.savings) || 0
+    });
+});
 
-// update amount in the account table
 app.post('/updateSession', (req, res) => {
-    
-    session.savings = req.body.currentAmount;
-    console.log('NEW UPDATED AMOUNT: ' + session.savings);
-    res.status(300).send('New amount transmitted');
-})
+    const newAmount = parseFloat(req.body.currentAmount);
+    if (isNaN(newAmount)) {
+        return res.status(400).send('Invalid amount');
+    }
+    req.session.savings = newAmount;
+    res.status(200).send('New amount transmitted');
+});
 
-
-// run server
 app.listen(port2, function(error) {
     if (error) {
-        console.log('Error: ', error);
-    }
-    else {
+        console.log(error);
+    } else {
         console.log('Listening to port: ' + port2);
     }
-})
+});
